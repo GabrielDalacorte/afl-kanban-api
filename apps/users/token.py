@@ -40,5 +40,6 @@ class CustomObtainAuthToken(ObtainAuthToken):
 
         return Response({
             'token': token.key,
-            'name': name,
+            'name': name,   
+            'image': user.image.url
         }, status=status.HTTP_200_OK)
