@@ -28,13 +28,18 @@ class Card(models.Model):
         ('done', 'Done'),
     ]
 
+    title = models.CharField(max_length=255)
     column = models.ForeignKey(Column, on_delete=models.CASCADE, related_name='cards')
     delivery_date = models.DateField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='on_time')
     assignee = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_cards'
     )
+    order = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ['column', 'order', 'created_at']
+
     def __str__(self):
-        return f"{self.column} - {self.get_status_display()}"
+        return f"{self.title} - {self.column} - {self.get_status_display()}"

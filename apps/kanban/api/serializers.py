@@ -4,11 +4,14 @@ from datetime import date
 
 class CardSerializer(serializers.ModelSerializer):
     assignee_email = serializers.EmailField(source='assignee.email', read_only=True)
-    delivery_date = serializers.DateField(format="%d/%m/%Y")
+    delivery_date = serializers.DateField(
+        format="%d/%m/%Y",
+        input_formats=["%Y-%m-%d", "%d/%m/%Y"]
+    )
 
     class Meta:
         model = Card
-        fields = ['id', 'column', 'delivery_date', 'status', 'assignee', 'assignee_email', 'created_at']
+        fields = ['id', 'title', 'order', 'column', 'delivery_date', 'status', 'assignee', 'assignee_email', 'created_at']
         read_only_fields = ['id', 'created_at', 'assignee_email']
 
     def to_representation(self, instance):

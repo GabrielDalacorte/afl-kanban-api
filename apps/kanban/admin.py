@@ -17,7 +17,7 @@ class ColumnAdmin(admin.ModelAdmin):
 
 @admin.register(Card)
 class CardAdmin(admin.ModelAdmin):
-    list_display = ('column', 'status', 'delivery_date', 'assignee', 'created_at')
-    search_fields = ('column__name', 'assignee__email')
+    list_display = ('title', 'column', 'status', 'delivery_date', 'assignee', 'order', 'created_at')
+    search_fields = ('title', 'column__name', 'assignee__email')
     list_filter = ('status', 'column', 'delivery_date')
-    ordering = ('column', 'created_at')
+    ordering = ('column', 'order', 'created_at')

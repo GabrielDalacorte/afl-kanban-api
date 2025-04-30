@@ -5,6 +5,7 @@ from apps.kanban.api.serializers import BoardSerializer, ColumnSerializer, CardS
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework import status
+from django.db import models
 
 class BoardViewSet(viewsets.ModelViewSet):
     queryset = Board.objects.all()
@@ -22,7 +23,8 @@ class BoardViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        self.perform_destroy(instance)
+        instance.active = False
+        instance.save(update_fields=["active"])
         return Response({"detail": "Board deletado com sucesso."}, status=status.HTTP_204_NO_CONTENT)
     
 class ColumnViewSet(viewsets.ModelViewSet):
@@ -36,6 +38,25 @@ class ColumnViewSet(viewsets.ModelViewSet):
         if board_id:
             queryset = queryset.filter(board_id=board_id)
         return queryset
+    
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        new_order = request.data.get('order')
+        if new_order is not None:
+            try:
+                new_order = int(new_order)
+            except ValueError:
+                return Response({"detail": "Order inválido."}, status=status.HTTP_400_BAD_REQUEST)
+
+            if instance.order != new_order:
+                other_column = Column.objects.filter(
+                    board=instance.board,
+                    order=new_order
+                ).exclude(id=instance.id).first()
+                if other_column:
+                    other_column.order = instance.order
+                    other_column.save(update_fields=["order"])
+        return super().partial_update(request, *args, **kwargs)
 
 class CardViewSet(viewsets.ModelViewSet):   
     queryset = Card.objects.all()
@@ -51,9 +72,23 @@ class CardViewSet(viewsets.ModelViewSet):
             raise ValidationError({"detail": "Não é possível mover um card com status 'Concluído'."})
         return super().update(request, *args, **kwargs)
 
+    def perform_create(self, serializer):
+        column = serializer.validated_data['column']
+        Card.objects.filter(column=column).update(order=models.F('order') + 1)
+        serializer.save(
+            assignee=self.request.user,
+            status="on_time",
+            order=1
+        )
+
     def perform_update(self, serializer):
         instance = serializer.save()
         if instance.column.name.lower() == "produção":
             if instance.status != "done":
                 instance.status = "done"
                 instance.save(update_fields=["status"])
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response({"detail": "Card deletado com sucesso."}, status=status.HTTP_204_NO_CONTENT)
