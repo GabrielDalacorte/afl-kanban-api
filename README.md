@@ -89,6 +89,7 @@ The `afl-kanban-api` is a RESTful API designed to manage a kanban board system. 
 
 The system comes with a pre-registered user for testing purposes:
 - **Email**: gnunes.servico@gmail.com
+- **User**: nunes
 - **Password**: 1611
 
 You can use these credentials to authenticate and test the API endpoints.
